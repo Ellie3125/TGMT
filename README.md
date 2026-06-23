@@ -1,6 +1,6 @@
 # CLIP Image Retrieval Web App
 
-Project này là web app tìm kiếm ảnh trong `D:/TGMT/dataset` bằng CLIP. App hỗ trợ hai luồng chính:
+Project này là web app tìm kiếm ảnh bằng CLIP. App hỗ trợ hai luồng chính:
 
 - Image-to-image retrieval bằng CLIP: upload một ảnh truy vấn để tìm ảnh tương tự trong dataset.
 - Text-to-image retrieval bằng CLIP: nhập mô tả như `a red car`, `a dog`, `a person riding a bike` để tìm ảnh phù hợp trong dataset.
@@ -10,14 +10,15 @@ Project này là web app tìm kiếm ảnh trong `D:/TGMT/dataset` bằng CLIP. 
 ## Cấu trúc thư mục
 
 ```text
-D:/TGMT
+root
 ├── app/
 │   ├── main.py
 │   ├── clip_search.py
 │   └── static/
 │       ├── index.html
 │       ├── style.css
-│       └── script.js
+│       ├── script.js
+│       └── favicon.svg
 ├── dataset/
 ├── embeddings/
 ├── uploads/
@@ -32,14 +33,20 @@ D:/TGMT
 
 ## Cài đặt
 
-Mở PowerShell tại thư mục project:
+Clone project, mở terminal tại thư mục project rồi cài dependencies:
 
 ```powershell
-cd D:\TGMT
+cd <project-folder>
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+```
+
+Nếu dùng macOS/Linux, kích hoạt môi trường ảo bằng:
+
+```bash
+source .venv/bin/activate
 ```
 
 Nên dùng Python 3.10, 3.11 hoặc 3.12 để PyTorch/Transformers ổn định.
@@ -128,7 +135,7 @@ Hai API tìm kiếm trả cùng format:
   "results": [
     {
       "rank": 1,
-      "image_path": "D:/TGMT/dataset/0.jpg",
+      "image_path": "<absolute-project-path>/dataset/0.jpg",
       "image_url": "/dataset/0.jpg",
       "score": 0.9123,
       "filename": "0.jpg"
