@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tìm ảnh tương tự bằng CLIP</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <main class="app-shell">
+        <header class="page-header">
+            <p class="eyebrow">CLIP Image Retrieval</p>
+            <h1>Tìm kiếm ảnh bằng CLIP</h1>
+            <p class="page-description">Tìm ảnh trong dataset cục bộ bằng ảnh upload hoặc mô tả text như "a red car", "a dog", "a person riding a bike".</p>
+        </header>
+
+        <section class="search-workspace" aria-label="Khu vực tìm kiếm ảnh bằng CLIP">
+            <article class="search-panel">
+                <div class="block-heading">
+                    <div>
+                        <p class="step-label">Bước 1</p>
+                        <h2>Chọn kiểu truy vấn</h2>
+                    </div>
+                </div>
+
+                <div class="mode-toggle" role="tablist" aria-label="Chọn chế độ tìm kiếm">
+                    <button id="imageModeBtn" class="mode-button is-active" type="button" role="tab" aria-selected="true" aria-controls="imageModePanel" data-mode="image">
+                        Tìm bằng ảnh
+                    </button>
+                    <button id="textModeBtn" class="mode-button" type="button" role="tab" aria-selected="false" aria-controls="textModePanel" data-mode="text">
+                        Tìm bằng text
+                    </button>
+                </div>
+
+                <div id="imageModePanel" class="query-mode-panel" role="tabpanel" aria-labelledby="imageModeBtn">
+                    <label class="dropzone" id="dropZone" for="imageInput" tabindex="0">
+                        <input class="file-input" type="file" id="imageInput" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                        <span class="dropzone-mark" aria-hidden="true">+</span>
+                        <span class="dropzone-title">Kéo thả ảnh vào đây</span>
+                        <span class="dropzone-copy">hoặc bấm để chọn ảnh từ máy của bạn</span>
+                    </label>
+
+                    <p class="helper-text">Hỗ trợ JPG, PNG, WEBP. Ảnh upload chỉ dùng làm truy vấn tạm thời và không tự thêm vào dataset.</p>
+                </div>
+
+                <div id="textModePanel" class="query-mode-panel" role="tabpanel" aria-labelledby="textModeBtn" hidden>
+                    <label class="text-query-field" for="textQuery">
+                        <span>Mô tả ảnh cần tìm</span>
+                        <textarea id="textQuery" rows="6" placeholder="Ví dụ: a red car, a dog, a person riding a bike"></textarea>
+                    </label>
+
+                    <p class="helper-text">Nhập mô tả ngắn hoặc cụm từ tiếng Anh để CLIP tìm ảnh phù hợp trong dataset.</p>
+                </div>
+
+                <div class="search-actions">
+                    <label class="top-k-field">
+                        <span>Số kết quả</span>
+                        <input type="number" id="topK" value="10" min="1" max="50">
+                    </label>
+
+                    <button id="searchBtn" class="primary-button" type="button" disabled>
+                        Tìm kiếm
+                    </button>
+                </div>
+            </article>
+
+            <aside id="queryPreview" class="query-preview" aria-live="polite">
+                <div class="block-heading compact">
+                    <div>
+                        <p class="step-label">Bước 2</p>
+                        <h2>Truy vấn hiện tại</h2>
+                    </div>
+                    <button id="clearImageBtn" class="ghost-button" type="button" hidden>Xóa ảnh</button>
+                </div>
+
+                <div class="query-frame">
+                    <div id="queryPlaceholder" class="query-placeholder">
+                        <span aria-hidden="true">IMG</span>
+                        <p>Ảnh hoặc mô tả text sẽ hiển thị ở đây trước khi tìm kiếm.</p>
+                    </div>
+                    <img id="queryImage" alt="Ảnh truy vấn đã upload" hidden>
+                </div>
+
+                <div class="query-meta">
+                    <p id="queryFilename">Chưa chọn ảnh</p>
+                    <p id="queryDetails"></p>
+                </div>
+            </aside>
+        </section>
+
+        <section class="results-section" aria-labelledby="resultsTitle">
+            <div class="section-heading">
+                <div>
+                    <p class="step-label">Bước 3</p>
+                    <h2 id="resultsTitle">Kết quả trong dataset</h2>
+                </div>
+                <div class="status-stack">
+                    <p id="statusText" role="status" aria-live="polite">Chọn ảnh hoặc nhập text để bắt đầu tìm kiếm.</p>
+                    <div class="index-status">
+                        <span id="indexStatusText">Đang kiểm tra index...</span>
+                        <button id="rebuildIndexBtn" class="ghost-button small" type="button">Rebuild index</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="results" class="results-grid" aria-live="polite"></div>
+        </section>
+    </main>
+
+    <div id="imageModal" class="image-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+        <button class="modal-backdrop" type="button" aria-label="Đóng xem ảnh lớn"></button>
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <p id="modalRank" class="step-label"></p>
+                    <h2 id="modalTitle">Ảnh kết quả</h2>
+                </div>
+                <button id="modalCloseBtn" class="icon-button" type="button" aria-label="Đóng">×</button>
+            </div>
+            <div class="modal-image-wrap">
+                <img id="modalImage" alt="">
+                <div id="modalImageFallback" class="image-fallback" hidden>Không thể tải ảnh</div>
+            </div>
+            <p id="modalMeta" class="modal-meta"></p>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
